@@ -23,6 +23,8 @@
 
 package org.flyve.mdm.agent.utils;
 
+import android.provider.Settings;
+import java.util.UUID;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Notification;
@@ -48,13 +50,14 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.LocalBroadcastManager;
+import com.google.android.material.snackbar.Snackbar;
+import androidx.core.app.NotificationCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.util.Base64;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
+
 
 import org.flyve.mdm.agent.R;
 import org.flyve.mdm.agent.data.database.ApplicationData;
@@ -477,15 +480,26 @@ public class Helpers {
 	}
 
 	/**
-	 * Get Device Serial to work with simulator and real devices
-	 * @return String with Device Serial
+	 * Get Device Serial using Android ID (Modern Android 10+ compliant)
+	 * @param context Context required to access Settings
+	 * @return String with Device Serial or UUID
 	 */
-	public static String getDeviceSerial() {
-		String serial;
-		if(Build.SERIAL.equalsIgnoreCase("unknown")) {
-			serial = "Unknown";
-		} else {
-			serial = Build.SERIAL;
+	public static String getDeviceSerial(Context context) {
+		String serial = "Unknown";
+
+		try {
+			// 1. Attempt to get the Secure Android ID
+			serial = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+		} catch (Exception e) {
+			// Log error if needed, but keep going
+			FlyveLog.e("Helpers", "Failed to get Android ID: " + e.getMessage());
+		}
+
+		// 2. Validation & Fallback
+		// "9774d56d682e549c" is a known bugged ID on some android phones, treat it as invalid.
+		if (serial == null || serial.equals("9774d56d682e549c") || serial.equalsIgnoreCase("unknown")) {
+			// If we can't get a hardware ID, generate a random UUID so enrollment succeeds.
+			serial = UUID.randomUUID().toString();
 		}
 
 		return serial;
@@ -584,7 +598,7 @@ public class Helpers {
 				.setAction(action, callback);
 
 		View snackbarView = snackbar.getView();
-		TextView snackTextView = snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+		TextView snackTextView = snackbarView.findViewById(com.google.android.material.R.id.snackbar_text);
 		snackTextView.setMaxLines(3);
 		snackbar.show();
 	}

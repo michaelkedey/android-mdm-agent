@@ -27,7 +27,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.net.Uri;
-import android.support.v7.app.AlertDialog;
+// NOTE: If this import is red, change it to: import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 
 import org.flyve.inventory.categories.Hardware;
 import org.flyve.mdm.agent.BuildConfig;
@@ -156,10 +157,19 @@ public class EnrollmentModel implements Enrollment.Model {
 
             String mInventory = Helpers.base64encode( inventory.trim() );
 
-            payload.put("_email", arrEmails.get(0).getEmail()); // get first email
+            // --- THE FIX (MQTT VERSION) ---
+            // 1. Generate the ID using the activity as context
+            String uniqueID = Helpers.getDeviceSerial(activity);
+            // 2. Put it in both slots
+            payload.put("_serial", uniqueID);
+            payload.put("_uuid", uniqueID);
+            // -----------------------------
+
+            payload.put("_email", arrEmails.get(0).getEmail());
             payload.put("_invitation_token", invitationToken);
-            payload.put("_serial", Helpers.getDeviceSerial());
-            payload.put("_uuid", new Hardware(activity).getUUID());
+
+            // NOTE: I deleted the old duplicate lines that were here.
+
             payload.put("csr", requestCSR);
             payload.put("firstname", firstName);
             payload.put("lastname", lastName);
@@ -168,10 +178,10 @@ public class EnrollmentModel implements Enrollment.Model {
             payload.put("type", "android");
             payload.put("has_system_permission", Helpers.isSystemApp(activity));
             payload.put("inventory", mInventory);
-            // could be mqtt or fcm
+
+            // MQTT Settings
             payload.put("notification_type", "mqtt");
-            // this is the token get from fcm register
-            payload.put("notification_token", "");
+            payload.put("notification_token", ""); // Empty is correct for MQTT
 
             FlyveLog.d(mInventory);
 
@@ -210,4 +220,3 @@ public class EnrollmentModel implements Enrollment.Model {
         }
     }
 }
-

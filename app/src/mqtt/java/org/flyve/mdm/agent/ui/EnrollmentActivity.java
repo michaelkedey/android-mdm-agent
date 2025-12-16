@@ -30,7 +30,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.text.InputType;
 import android.view.KeyEvent;
 import android.view.View;
@@ -42,6 +42,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import androidx.appcompat.widget.Toolbar;
 
 import org.flyve.mdm.agent.R;
 import org.flyve.mdm.agent.core.enrollment.Enrollment;
@@ -92,7 +93,7 @@ public class EnrollmentActivity extends AppCompatActivity implements Enrollment.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_form);
 
-        android.support.v7.widget.Toolbar toolbar = findViewById(R.id.toolbar);
+        androidx.appcompat.widget.Toolbar toolbar = findViewById(R.id.toolbar);
         if (toolbar != null) {
             setSupportActionBar(toolbar);
             try {

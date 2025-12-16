@@ -27,10 +27,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.net.Uri;
-import android.support.v7.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
+import org.flyve.mdm.agent.BuildConfig;
 
 import org.flyve.inventory.categories.Hardware;
-import org.flyve.mdm.agent.BuildConfig;
 import org.flyve.mdm.agent.R;
 import org.flyve.mdm.agent.core.CommonErrorType;
 import org.flyve.mdm.agent.data.database.MqttData;
@@ -155,8 +155,18 @@ public class EnrollmentModel implements Enrollment.Model {
 
             payload.put("_email", arrEmails.get(0).getEmail()); // get first email
             payload.put("_invitation_token", invitationToken);
-            payload.put("_serial", Helpers.getDeviceSerial());
-            payload.put("_uuid", new Hardware(activity).getUUID());
+            payload.put("uuid", getSafeDeviceId(activity));
+
+            // --- THE FIX IS HERE ---
+            // We use Helpers.getDeviceSerial(context) for BOTH Serial and UUID
+            // This ensures they match and are valid on Android 10+
+            // Generate the safe ID once
+            String safeID = getSafeDeviceId(activity);
+            payload.put("uuid", safeID);
+            payload.put("_serial", safeID);
+            payload.put("_uuid", safeID);
+            // -----------------------
+
             payload.put("csr", "");
             payload.put("firstname", firstName);
             payload.put("lastname", lastName);
@@ -165,6 +175,7 @@ public class EnrollmentModel implements Enrollment.Model {
             payload.put("type", "android");
             payload.put("has_system_permission", Helpers.isSystemApp(activity));
             payload.put("inventory", mInventory);
+
             // could be mqtt or fcm
             payload.put("notification_type", "fcm");
             // this is the token get from fcm register
@@ -205,6 +216,17 @@ public class EnrollmentModel implements Enrollment.Model {
         } catch (Exception ex) {
             presenter.showSnackError(CommonErrorType.ENROLLMENT_REQUEST_EXCEPTION, ex.getMessage());
         }
+    }
+
+    private String getSafeDeviceId(android.content.Context context) {
+        String deviceId = android.provider.Settings.Secure.getString(
+                context.getContentResolver(),
+                android.provider.Settings.Secure.ANDROID_ID
+        );
+        if (deviceId == null || deviceId.isEmpty()) {
+            deviceId = java.util.UUID.randomUUID().toString();
+        }
+        return deviceId;
     }
 }
 

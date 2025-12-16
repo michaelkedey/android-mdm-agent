@@ -34,8 +34,8 @@ import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
-import android.support.v4.app.NotificationCompat;
-
+import androidx.core.app.NotificationCompat;
+import android.util.Log;
 import org.flyve.policies.R;
 
 
@@ -52,6 +52,7 @@ public class Helpers {
 
 	public static void sendToNotificationBar(Context context, int id, String title, String message, boolean isPersistence, Class<?> cls, String from) {
 
+		String notificationChannelId = "1122";
 		Intent resultIntent = new Intent(context, cls);
 		resultIntent.putExtra("From", from);
 		resultIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -59,7 +60,7 @@ public class Helpers {
 
 		Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
-		NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(context, notificationChannelId)
 				.setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.drawable.icon))
 				.setContentTitle(title)
 				.setContentText(message)
@@ -75,7 +76,6 @@ public class Helpers {
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			// Notification Channel
-			String notificationChannelId = "1122";
 			String channelName = "Flyve MDM Notifications";
 			int importance = NotificationManager.IMPORTANCE_LOW;
 			NotificationChannel notificationChannel = new NotificationChannel(notificationChannelId, channelName, importance);
@@ -88,7 +88,7 @@ public class Helpers {
 				notificationManager.createNotificationChannel(notificationChannel);
 				builder.setChannelId(notificationChannelId);
 			} catch (Exception ex) {
-				FlyveLog.e(Helpers.class.getClass().getName() + ", sendToNotificationBar", ex.getMessage());
+				Log.e("Helpers","Error sending notification:" + ex.getMessage());
 			}
 		}
 
@@ -105,7 +105,7 @@ public class Helpers {
 		try {
 			notificationManager.notify(id, builder.build());
 		} catch (Exception ex) {
-			FlyveLog.e(Helpers.class.getClass().getName() + ", deleteFolder", ex.getMessage());
+			Log.e("Helpers", "Error deleting Folder:" + ex.getMessage());
 		}
 	}
 

@@ -306,7 +306,7 @@ public class EnrollmentHelper {
 
                 if(data.contains("ERROR")){
                     final String msgError = manageError(data);
-                    FlyveLog.e(this.getClass().getName() + ", enrollment", msgError + " - Device serial: " + Helpers.getDeviceSerial());
+                    FlyveLog.e(this.getClass().getName() + ", enrollment", msgError + " - Device serial: " + Helpers.getDeviceSerial(context));
 
                     EnrollmentHelper.runOnUI(new Runnable() {
                         public void run() {
@@ -358,7 +358,7 @@ public class EnrollmentHelper {
                         cache.setPort(mport);
                         cache.setTls(mssl);
                         cache.setTopic(mtopic);
-                        cache.setMqttUser(Helpers.getDeviceSerial());
+                        cache.setMqttUser(Helpers.getDeviceSerial(context));
                         cache.setMqttPasswd(mpassword);
                         cache.setCertificate(mcert);
                         cache.setName(mNameEmail);

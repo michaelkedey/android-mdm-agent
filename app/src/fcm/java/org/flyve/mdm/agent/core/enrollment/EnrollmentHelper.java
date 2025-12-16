@@ -38,7 +38,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.HashMap;
-
+import android.provider.Settings;
 import static org.flyve.mdm.agent.utils.ConnectionHTTP.getSyncWebData;
 
 public class EnrollmentHelper {
@@ -305,7 +305,7 @@ public class EnrollmentHelper {
 
                 if(data.contains("ERROR")){
                     final String msgError = manageError(data);
-                    FlyveLog.e(this.getClass().getName() + ", enrollment", msgError + " - Device UUID: " + Helpers.getDeviceUniqueID(context));
+                    FlyveLog.e(this.getClass().getName() + ", enrollment", msgError + " - Device UUID: " + getSafeDeviceId(context));
 
                     EnrollmentHelper.runOnUI(new Runnable() {
                         public void run() {
@@ -357,7 +357,7 @@ public class EnrollmentHelper {
                         cache.setPort(mport);
                         cache.setTls(mssl);
                         cache.setTopic(mtopic);
-                        cache.setMqttUser(Helpers.getDeviceSerial());
+                        cache.setMqttUser(getSafeDeviceId(context));
                         cache.setMqttPasswd(mpassword);
                         cache.setCertificate(mcert);
                         cache.setName(mNameEmail);
@@ -385,6 +385,15 @@ public class EnrollmentHelper {
             }
         });
         t.start();
+    }
+
+    // ADD THIS METHOD TO GENERATE A SAFE ID
+    private String getSafeDeviceId(Context context) {
+        String deviceId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+        if (deviceId == null || deviceId.isEmpty()) {
+            deviceId = java.util.UUID.randomUUID().toString();
+        }
+        return deviceId;
     }
 
     /**
