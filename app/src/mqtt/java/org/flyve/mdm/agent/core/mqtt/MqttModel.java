@@ -131,11 +131,35 @@ public class MqttModel implements mqtt.Model {
         String clientId;
         MqttConnectOptions options;
 
-        if(client==null) {
+        /*if(client==null) {
             try {
                 clientId = MqttClient.generateClientId();
                 client = new MqttAndroidClient(context, protocol + "://" + mBroker + ":" + mPort, clientId);
             } catch (ExceptionInInitializerError ex) {
+                showDetailError(context, CommonErrorType.MQTT_IN_INITIALIZER_ERROR, ex.getMessage());
+                reconnect(context, callback);
+                return;
+            }
+
+            client.setCallback(callback);
+        }*/
+
+        if (client == null) {
+            try {
+                // Flyve MDM REQUIREMENT:
+                // clientId MUST be the agent UUID (same as MQTT username)
+                clientId = mUser;
+
+                if (clientId == null || clientId.trim().isEmpty()) {
+                    throw new IllegalStateException("MQTT clientId (agent UUID) is null or empty");
+                }
+
+                client = new MqttAndroidClient(
+                        context,
+                        protocol + "://" + mBroker + ":" + mPort,
+                        clientId
+                );
+            } catch (Exception ex) {
                 showDetailError(context, CommonErrorType.MQTT_IN_INITIALIZER_ERROR, ex.getMessage());
                 reconnect(context, callback);
                 return;
