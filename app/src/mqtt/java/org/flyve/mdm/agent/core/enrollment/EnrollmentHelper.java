@@ -353,12 +353,22 @@ public class EnrollmentHelper {
                         int mFleetId = jsonObject.getInt("plugin_flyvemdm_fleets_id");
                         String mApiToken = jsonObject.getString("api_token");
 
+
+                        String mqttUser = "";
+                        String[] topicParts = mtopic.split("/");
+// Expected topic format: 0/agent/<mqttUser>
+                        if (topicParts.length >= 3) {
+                            mqttUser = topicParts[2];
+                        } else {
+                            FlyveLog.e(this.getClass().getName(), "enrollment", "Invalid MQTT topic format: " + mtopic);
+                        }
+
                         cache.setAgentId(agentId);
                         cache.setBroker(mbroker);
                         cache.setPort(mport);
                         cache.setTls(mssl);
                         cache.setTopic(mtopic);
-                        cache.setMqttUser(Helpers.getDeviceSerial());
+                        cache.setMqttUser(mqttUser);
                         cache.setMqttPasswd(mpassword);
                         cache.setCertificate(mcert);
                         cache.setName(mNameEmail);
