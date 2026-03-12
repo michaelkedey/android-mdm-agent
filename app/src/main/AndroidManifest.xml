@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="org.flyve.mdm.agent"
     android:versionCode="3882"
     android:versionName="2.0.0-rc.7">
 
