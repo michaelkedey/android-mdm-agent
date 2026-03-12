@@ -6,17 +6,16 @@ static def releaseTime() {
 
 android {
     namespace 'org.flyve.mdm.agent'
-//    compileSdkVersion 28
     compileSdkVersion 34
 
-//    buildToolsVersion '28.0.3'
     defaultConfig {
         applicationId 'org.flyve.mdm.agent'
         minSdkVersion 21
         targetSdkVersion 28
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
     }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -26,6 +25,7 @@ android {
             testCoverageEnabled true
         }
     }
+
     flavorDimensions "mdm"
     productFlavors {
         fcm {
@@ -36,23 +36,9 @@ android {
             applicationIdSuffix ".mqtt"
         }
     }
-    android.applicationVariants.all { variant ->
-        variant.outputs.all { output ->
-            def outputFile = outputFileName
-            if (outputFile != null && outputFile.endsWith('.apk')) {
-                def fileName = outputFile.replace("app",
-                        "${defaultConfig.applicationId}_${releaseTime()}")
-                outputFileName = fileName
-
-            }
-        }
-    }
 
     lintOptions {
         abortOnError false
-    }
-    defaultConfig {
-        multiDexEnabled true
     }
 }
 
@@ -64,7 +50,7 @@ sonarqube {
 
 dependencies {
     androidTestImplementation('androidx.test.espresso:espresso-core:3.5.1')
-    //androidTestImplementation('tools.fastlane:screengrab:1.1.0')
+    androidTestImplementation('tools.fastlane:screengrab:1.1.0')
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.mockito:mockito-core:2.21.0'
     androidTestImplementation 'org.mockito:mockito-android:2.21.0'
@@ -88,8 +74,8 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'android.arch.persistence.room:runtime:1.1.1'
-    annotationProcessor 'android.arch.persistence.room:compiler:1.1.1'
+    implementation 'androidx.room:room-runtime:2.5.2'
+    annotationProcessor 'androidx.room:room-compiler:2.5.2'
     // Logger
     implementation 'com.orhanobut:logger:2.1.1'
 //    // Android Inventory Library

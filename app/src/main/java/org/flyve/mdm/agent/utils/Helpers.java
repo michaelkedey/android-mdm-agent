@@ -48,9 +48,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.LocalBroadcastManager;
+import com.google.android.material.snackbar.Snackbar;
+import androidx.core.app.NotificationCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.util.Base64;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -584,7 +584,7 @@ public class Helpers {
 				.setAction(action, callback);
 
 		View snackbarView = snackbar.getView();
-		TextView snackTextView = snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+		TextView snackTextView = snackbarView.findViewById(com.google.android.material.R.id.snackbar_text);
 		snackTextView.setMaxLines(3);
 		snackbar.show();
 	}

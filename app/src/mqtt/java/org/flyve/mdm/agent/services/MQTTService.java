@@ -1,38 +1,21 @@
-/*
- * Copyright Teclib. All rights reserved.
- *
- * Flyve MDM is a mobile device management software.
- *
- * Flyve MDM is free software: you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 3
- * of the License, or (at your option) any later version.
- *
- * Flyve MDM is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * ------------------------------------------------------------------------------
- * @author    Rafael Hernandez
- * @copyright Copyright Teclib. All rights reserved.
- * @license   GPLv3 https://www.gnu.org/licenses/gpl-3.0.html
- * @link      https://github.com/flyve-mdm/android-mdm-agent
- * @link      https://flyve-mdm.com
- * ------------------------------------------------------------------------------
- */
-
 package org.flyve.mdm.agent.services;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.flyve.mdm.agent.R;
 import org.flyve.mdm.agent.core.mqtt.MqttPresenter;
 import org.flyve.mdm.agent.core.mqtt.mqtt;
 import org.flyve.mdm.agent.utils.FlyveLog;
@@ -41,17 +24,23 @@ import org.flyve.mdm.agent.utils.FlyveLog;
  * This is the service get and send message from MQTT
  */
 public class MQTTService extends Service implements MqttCallback, mqtt.View {
+
+    private static final String CHANNEL_ID = "flyve_mqtt_service";
+    private static final int NOTIFICATION_ID = 101;
+
     private mqtt.Presenter presenter;
-    IBinder mBinder = new LocalBinder();
+    private final IBinder mBinder = new LocalBinder();
 
     public static Intent start(Context context) {
-        MQTTService mMQTTService = new MQTTService();
-        Intent mServiceIntent = new Intent(context.getApplicationContext(), mMQTTService.getClass());
+        Intent serviceIntent = new Intent(context.getApplicationContext(), MQTTService.class);
 
-        // Start the service
-        context.startService(mServiceIntent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.getApplicationContext().startForegroundService(serviceIntent);
+        } else {
+            context.getApplicationContext().startService(serviceIntent);
+        }
 
-        return mServiceIntent;
+        return serviceIntent;
     }
 
     /**
@@ -78,9 +67,9 @@ public class MQTTService extends Service implements MqttCallback, mqtt.View {
     public IBinder onBind(Intent intent) {
         return mBinder;
     }
+
     /**
-     * Called by the system every time a client explicitly starts the service by calling the method startService(Intent)
-     * https://developer.android.com/reference/android/app/Service.html#START_STICKY Documentation of the Constant
+     * Called by the system every time a client explicitly starts the service
      *
      * @param intent supplied to start the service
      * @param flags the additional data about this start request
@@ -89,7 +78,10 @@ public class MQTTService extends Service implements MqttCallback, mqtt.View {
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        super.onStartCommand(intent, flags, startId);
+        FlyveLog.d("MQTT Service onStartCommand");
+
+        createNotificationChannel();
+        startForeground(NOTIFICATION_ID, buildNotification("MQTT service running"));
 
         presenter.connect(getApplicationContext(), MQTTService.this);
         return START_STICKY;
@@ -97,12 +89,13 @@ public class MQTTService extends Service implements MqttCallback, mqtt.View {
 
     /**
      * Called by the system to notify a Service that it is no longer used and is being removed
-     * It calls the method from the parent
      */
     @Override
     public void onDestroy() {
-        super.onDestroy();
+        FlyveLog.d("MQTT Service onDestroy");
         presenter.onDestroy(getApplicationContext());
+        stopForeground(true);
+        super.onDestroy();
     }
 
     /**
@@ -111,8 +104,13 @@ public class MQTTService extends Service implements MqttCallback, mqtt.View {
      */
     @Override
     public void connectionLost(Throwable cause) {
-        // send to backend that agent lost connection
-        presenter.connectionLost(getApplicationContext(), MQTTService.this, cause.getMessage());
+        String reason = (cause != null && cause.getMessage() != null)
+                ? cause.getMessage()
+                : "Unknown connection loss";
+
+        FlyveLog.e("MQTTService", "MQTT connection lost: " + reason);
+        updateNotification("MQTT disconnected");
+        presenter.connectionLost(getApplicationContext(), MQTTService.this, reason);
     }
 
     /**
@@ -134,6 +132,47 @@ public class MQTTService extends Service implements MqttCallback, mqtt.View {
     public void messageArrived(String topic, MqttMessage message) {
         String debugInfo = "Notification (message): " + message + "\n" + "Notification (topic): " + topic;
         FlyveLog.d(debugInfo);
+        updateNotification("MQTT message received");
         presenter.messageArrived(getApplicationContext(), topic, message);
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+            if (manager == null) {
+                return;
+            }
+
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Flyve MQTT Service",
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setDescription("Keeps Flyve MQTT connection alive");
+            manager.createNotificationChannel(channel);
+        }
+    }
+
+    private Notification buildNotification(String contentText) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Flyve MDM")
+                .setContentText(contentText)
+                .setSmallIcon(R.drawable.ic_notification_white)
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW);
+
+        return builder.build();
+    }
+
+    private void updateNotification(String contentText) {
+        NotificationManager manager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (manager != null) {
+            manager.notify(NOTIFICATION_ID, buildNotification(contentText));
+        }
     }
 }
