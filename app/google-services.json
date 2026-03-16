@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "12799279120",
+    "project_id": "ntrms-mdm",
+    "storage_bucket": "ntrms-mdm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12799279120:android:b03283820a46435da24a95",
+        "android_client_info": {
+          "package_name": "org.flyve.mdm.agent"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCzXPxZolfudTFeFyvJsUFZr1d-B9DH-3A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
